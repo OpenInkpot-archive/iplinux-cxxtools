@@ -1,0 +1,12 @@
+Index: cxxtools-1.4.8/src/hdstream.cpp
+===================================================================
+--- cxxtools-1.4.8.orig/src/hdstream.cpp	2009-05-09 00:37:39.000000000 +0300
++++ cxxtools-1.4.8/src/hdstream.cpp	2009-05-09 00:38:00.000000000 +0300
+@@ -22,6 +22,7 @@
+ #include "cxxtools/hdstream.h"
+ #include <iomanip>
+ #include <cctype>
++#include <cstdio>
+ 
+ namespace cxxtools
+ {

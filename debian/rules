@@ -1,0 +1,28 @@
+#!/usr/bin/make -f
+# Sample debian/rules that uses cdbs.  Originaly written by Robert Millan.
+# This file is public domain.
+
+# Add here any variable or target overrides you need
+include /usr/share/cdbs/1/class/autotools.mk
+include /usr/share/cdbs/1/rules/debhelper.mk
+include /usr/share/cdbs/1/rules/patchsys-quilt.mk
+
+DEB_CONFIGURE_NORMAL_ARGS += --enable-shared --enable-static
+
+# Actually, rebuilding the whole build chain is a bit overkill
+# currently.  It used to be necessary since we did changes to
+# configure.in and Makefile.am files.
+post-patches::
+	if [ ! -e configure ] ; then aclocal -I /usr/share/autoconf-archive && autoheader && ln -s /usr/share/gettext/config.rpath . && libtoolize && automake -a && autoconf; fi
+
+clean::
+	rm -f configure aclocal.m4 config.* depcomp install-sh ltmain.sh missing libtool
+	rm -f Makefile.in src/Makefile.in demo/Makefile.in include/Makefile.in src/config.h.in
+	rm -f m4/libtool.m4 m4/ltoptions.m4 m4/ltsugar.m4 m4/ltversion.m4 m4/lt~obsolete.m4
+	rm -f config.rpath
+
+binary-post-install/libcxxtools6::
+	rm -f debian/libcxxtools6/usr/share/doc/libcxxtools6/README #just some installation notes
+
+binary-post-install/libcxxtools-dev::
+	rm -f debian/libcxxtools-dev/usr/share/doc/libcxxtools-dev/README #just some installation notes

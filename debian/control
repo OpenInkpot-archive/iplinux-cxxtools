@@ -1,0 +1,32 @@
+Source: cxxtools
+Section: libs
+Priority: optional
+Maintainer: Kari Pahula <kaol@debian.org>
+Build-Depends: libtool, libltdl3-dev, autoconf, automake1.9, cdbs, debhelper (>= 5), autoconf-archive, gettext, quilt
+Standards-Version: 3.8.1
+Homepage: http://www.tntnet.org/cxxtools.html
+
+Package: libcxxtools6
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: library of unrelated but useful C++ classes
+ cxxtools contains an argument-parser, a base-64 encoder/decoder, a
+ C++ interface to iconv, md5-stream for easy MD5 calculation,
+ threading classes, socket classes, a dynamic exception-safe buffer, a
+ wrapper for dlopen/dlsym, a pool template (e.g., for a connection
+ pool in a multi-threaded application), query_params, and a class for
+ easy parsing of CGI parameters (GET and POST) in a CGI program.
+
+Package: libcxxtools-dev
+Architecture: any
+Section: libdevel
+Depends: libstdc++6-4.3-dev | libstdc++-dev, libcxxtools6, ${shlibs:Depends}, ${misc:Depends}
+Description: library of unrelated but useful C++ classes
+ cxxtools contains an argument-parser, a base-64 encoder/decoder, a
+ C++ interface to iconv, md5-stream for easy MD5 calculation,
+ threading classes, socket classes, a dynamic exception-safe buffer, a
+ wrapper for dlopen/dlsym, a pool template (e.g., for a connection
+ pool in a multi-threaded application), query_params, and a class for
+ easy parsing of CGI parameters (GET and POST) in a CGI program.
+ .
+ This package has the development headers and the static libraries.

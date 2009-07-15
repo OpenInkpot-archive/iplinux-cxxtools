@@ -1,3 +1,9 @@
+cxxtools (1.4.8-3.1) asimov; urgency=low
+
+  * IPlinux port
+
+ -- Yauhen Kharuzhy <jekhor@gmail.com>  Wed, 15 Jul 2009 12:14:33 +0300
+
 cxxtools (1.4.8-3) unstable; urgency=low
 
   * Patch src/Makefile.am to not add -shared to libcxxtools_la_LDFLAGS.

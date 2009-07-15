@@ -1,0 +1,9 @@
+
+/** defines, which logging library to use */
+#define @CXXTOOLS_LOGGING@
+
+/** defines, how to implement atomic operations */
+#define @CXXTOOLS_ATOMICITY@
+
+/** defines whether we have suseconds_t on this system */
+#define @CXXTOOLS_SUSECONDS@

@@ -1,0 +1,242 @@
+AC_INIT(cxxtools, 1.4.8, [Tommi Maekitalo <tommi@tntnet.org>])
+AM_INIT_AUTOMAKE
+
+AC_PREREQ([2.5.9])
+
+abi_current=6
+abi_revision=0
+abi_age=0
+sonumber=${abi_current}:${abi_revision}:${abi_age}
+AC_SUBST(sonumber)
+
+unset CDPATH
+
+AC_CONFIG_MACRO_DIR([m4])
+AC_CONFIG_HEADERS([src/config.h])
+AC_CONFIG_FILES([include/cxxtools/config.h])
+AC_CONFIG_SRCDIR([src/base64stream.cpp])
+AC_CONFIG_SUBDIRS(libltdl)
+
+AC_HEADER_DIRENT
+
+AC_PROG_CC
+AC_PROG_CXX
+
+AC_CHECK_LIB(nsl, setsockopt)
+AC_CHECK_LIB(socket, accept)
+AC_SEARCH_LIBS(dlopen, dl, , AC_MSG_ERROR([dlopen not found]))
+AC_SUBST(NETWORK_LIBS)
+
+AM_ICONV
+if test "$am_cv_func_iconv" !=  yes; then
+  AC_MSG_ERROR(iconv not found);
+fi
+
+AC_LANG(C++)
+ACX_PTHREAD
+
+AC_PROG_LIBTOOL
+
+AC_ARG_WITH(
+   [logging],
+   AS_HELP_STRING([--with-logging],
+                  [specify logging-library. Accepted arguments:
+                   log4cxx, log4cplus, cxxtools, disable or probe. Default is cxxtools]),
+   [ ac_loggertype=$withval ],
+   [ ac_loggertype=cxxtools ])
+
+if test "$ac_loggertype" = "log4cxx" -o "$ac_loggertype" = "probe"; then
+   AC_CHECK_HEADER(
+      [log4cxx/logger.h],
+      [ AC_DEFINE([CXXTOOLS_LOG_LOG4CXX],
+                  [],
+                  [use log4cxx for logging])
+        ac_loggertype=log4cxx ],
+      [ if test "$ac_loggertype" = "log4cxx"; then
+          AC_MSG_ERROR(log4cxx not available)
+        fi
+      ]
+   )
+fi
+
+if test "$ac_loggertype" = "log4cplus" -o "$ac_loggertype" = "probe"; then
+   AC_CHECK_HEADER(
+      [log4cplus/logger.h],
+      [ AC_DEFINE([CXXTOOLS_LOG_LOG4CPLUS],
+                  [],
+                  [use log4cplus for logging])
+        ac_loggertype=log4cplus ],
+      [ if test "$ac_loggertype" = "log4cplus"; then
+          AC_MSG_ERROR(log4cplus not available)
+        fi
+      ]
+   )
+fi
+
+if test "$ac_loggertype" = "cxxtools" -o "$ac_loggertype" = "probe"; then
+  AC_DEFINE([CXXTOOLS_LOG_LOGBUILTIN], [], [use cxxtools logging])
+  ac_loggertype=cxxtools
+elif test "$ac_loggertype" = "disable" -o "$ac_loggertype" = "no"; then
+  AC_DEFINE([CXXTOOLS_LOG_DISABLE], [], [disable logging])
+fi
+
+case "$ac_loggertype" in
+    log4cxx)
+        AC_MSG_NOTICE([loggertype is log4cxx])
+        CXXTOOLS_LOG_LDFLAGS=-llog4cxx
+        CXXTOOLS_LOGGING=CXXTOOLS_LOGGING_LOG4CXX
+        ;;
+
+    log4cplus)
+        AC_MSG_NOTICE([loggertype is log4cplus])
+        CXXTOOLS_LOG_LDFLAGS=-llog4cplus
+        CXXTOOLS_LOGGING=CXXTOOLS_LOGGING_LOG4CPLUS
+        ;;
+
+    cxxtools)
+        AC_MSG_NOTICE([loggertype is cxxtools])
+        CXXTOOLS_LOG_LDFLAGS=
+        CXXTOOLS_LOGGING=CXXTOOLS_LOGGING_CXXTOOLS
+        ;;
+
+    disable)
+        AC_MSG_NOTICE([logging is disabled])
+        CXXTOOLS_LOGGING=CXXTOOLS_LOGGING_DISABLE
+        ;;
+
+    *)
+        AC_MSG_ERROR([unknown loggertype $ac_loggertype])
+        ;;
+esac
+
+CXXTOOLS_CXXFLAGS='-I${includedir}'
+CXXTOOLS_LDFLAGS='-L${libdir} -lcxxtools'
+
+AC_SUBST(CXXTOOLS_CXXFLAGS)
+AC_SUBST(CXXTOOLS_LDFLAGS)
+AC_SUBST(CXXTOOLS_LOG_LDFLAGS)
+AC_SUBST(CXXTOOLS_LOGGING)
+
+case "${host_cpu}-${host_os}" in
+*-aix*)
+    SHARED_LIB_FLAG=-qmkshrobj
+    ;;
+*-darwin*)
+    SHARED_LIB_FLAG=-dynamiclib
+    ;;
+*)  
+    SHARED_LIB_FLAG=-shared
+    ;;
+esac
+AC_SUBST(SHARED_LIB_FLAG)
+
+#
+# checking inline assembler type for atomic operations
+#
+AC_CHECKING(inline assembler type)
+
+AC_COMPILE_IFELSE(
+  [#include "include/cxxtools/atomicity.sun.h"
+   int main() { cxxtools::atomic_t a = 0; cxxtools::atomicIncrement(a); }
+  ],
+  AC_DEFINE([CXXTOOLS_ASMTYPE_SUN], [], [defined if assembler type is sun])
+  CXXTOOLS_ATOMICITY=CXXTOOLS_ATOMICITY_SUN
+  AC_MSG_RESULT(sun),
+
+  AC_COMPILE_IFELSE(
+    [#include "include/cxxtools/atomicity.windows.h"
+     int main() { cxxtools::atomic_t a = 0; cxxtools::atomicIncrement(a); }
+    ],
+    AC_DEFINE([CXXTOOLS_ASMTYPE_WINDOWS], [], [defined if assembler type is windows])
+    CXXTOOLS_ATOMICITY=CXXTOOLS_ATOMICITY_WINDOWS
+    AC_MSG_RESULT(windows),
+
+    AC_COMPILE_IFELSE(
+      [#include "include/cxxtools/atomicity.gcc.arm.h"
+       int main() { cxxtools::atomic_t a = 0; cxxtools::atomicIncrement(a); }
+      ],
+      CXXTOOLS_ATOMICITY=CXXTOOLS_ATOMICITY_GCC_ARM
+      AC_MSG_RESULT(gcc arm),
+
+      AC_COMPILE_IFELSE(
+        [#include "include/cxxtools/atomicity.gcc.mips.h"
+         int main() { cxxtools::atomic_t a = 0; cxxtools::atomicIncrement(a); }
+        ],
+        CXXTOOLS_ATOMICITY=CXXTOOLS_ATOMICITY_GCC_MIPS
+        AC_MSG_RESULT(gcc mips),
+
+        AC_COMPILE_IFELSE(
+          [#include "include/cxxtools/atomicity.gcc.ppc.h"
+           int main() { cxxtools::atomic_t a = 0; cxxtools::atomicIncrement(a); }
+          ],
+          CXXTOOLS_ATOMICITY=CXXTOOLS_ATOMICITY_GCC_PPC
+          AC_MSG_RESULT(gcc ppc),
+
+          AC_COMPILE_IFELSE(
+            [#include "include/cxxtools/atomicity.gcc.x86_64.h"
+             int main() { cxxtools::atomic_t a = 0; cxxtools::atomicIncrement(a); }
+            ],
+            CXXTOOLS_ATOMICITY=CXXTOOLS_ATOMICITY_GCC_X86_64
+            AC_MSG_RESULT(gcc x86-64),
+
+            AC_COMPILE_IFELSE(
+              [#include "include/cxxtools/atomicity.gcc.x86.h"
+               int main() { cxxtools::atomic_t a = 0; cxxtools::atomicIncrement(a); }
+              ],
+              CXXTOOLS_ATOMICITY=CXXTOOLS_ATOMICITY_GCC_X86
+              AC_MSG_RESULT(gcc x64),
+
+              AC_COMPILE_IFELSE(
+                [#include "include/cxxtools/atomicity.gcc.sparc.h"
+                 int main() { cxxtools::atomic_t a = 0; cxxtools::atomicIncrement(a); }
+                ],
+                CXXTOOLS_ATOMICITY=CXXTOOLS_ATOMICITY_GCC_SPARC
+                AC_MSG_RESULT(gcc sparc),
+
+                AC_COMPILE_IFELSE(
+                  [#include "include/cxxtools/atomicity.pthread.h"
+                   #include <pthread.h>
+                   int main() { cxxtools::atomic_t a = 0; cxxtools::atomicIncrement(a); }
+                  ],
+                  CXXTOOLS_ATOMICITY=CXXTOOLS_ATOMICITY_PTHREAD
+                  AC_MSG_RESULT(pthread)
+                  atomicity_pthread=yes
+
+                  AC_MSG_NOTICE(unknown asm type - will use generic atomic operations)
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+)
+
+AC_SUBST(CXXTOOLS_ATOMICITY)
+
+#
+# checking existance of suseconds_t, needed by hirestime.h
+#
+AC_CHECKING(for suseconds_t)
+
+AC_CHECK_TYPE(
+  suseconds_t,
+  [CXXTOOLS_SUSECONDS=CXXTOOLS_SUSECONDS_T],
+  [CXXTOOLS_SUSECONDS=CXXTOOLS_SUSECONDS_TIME_T],
+  [#include <sys/time.h>])
+
+AC_SUBST(CXXTOOLS_SUSECONDS)
+
+AM_CONDITIONAL(MAKE_ATOMICITY_PTHREAD, test "$atomicity_pthread" = yes)
+
+AC_CONFIG_FILES([cxxtools-config], [chmod +x cxxtools-config])
+
+AC_CONFIG_FILES([
+  Makefile
+  src/Makefile
+  include/Makefile
+  demo/Makefile
+  ])
+
+AC_OUTPUT

@@ -1,8 +1,10 @@
 Source: cxxtools
-Section: libs
+Section: core
 Priority: optional
-Maintainer: Kari Pahula <kaol@debian.org>
+Maintainer: Yauhen Kharuzhy <jekhor@gmail.com>
 Build-Depends: libtool, libltdl3-dev, autoconf, automake1.9, cdbs, debhelper (>= 5), autoconf-archive, gettext, quilt
+XCS-Cross-Build-Depends:
+XCS-Cross-Host-Build-Depends: libtool, autoconf, automake1.9, cdbs-embedded, debhelper (>= 5), autoconf-archive, gettext, quilt
 Standards-Version: 3.8.1
 Homepage: http://www.tntnet.org/cxxtools.html
 
